@@ -1,0 +1,21 @@
+type Location {
+    locationId: ID!
+    locationStreet: String
+    locationCity: String
+    locationState: String
+    locationCountry: String
+    locationTimezone: String
+}
+
+type Query {
+    getAllLocations(page: Int, size: Int): [Location!]!
+    getSingleLocation(locationId: ID!): Location
+}
+
+type Mutation {
+    createLocation(locationStreet: String!, locationCity: String, locationState: String,
+        locationCountry: String, locationTimezone: String): Location!
+    updateLocation(locationId: ID!, locationStreet: String, locationCity: String, locationState: String,
+        locationCountry: String, locationTimezone: String): Location
+    deleteLocation(locationId: ID!): Boolean!
+}

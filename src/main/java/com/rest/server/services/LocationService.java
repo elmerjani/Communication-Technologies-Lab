@@ -47,4 +47,7 @@ public class LocationService {
     public void deleteLocation(String id) {
         locationRepository.deleteById(id);
     }
+    public boolean existsLocation(String id) {
+        return locationRepository.existsById(id);
+    }
 }
