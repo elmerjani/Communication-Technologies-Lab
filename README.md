@@ -13,7 +13,7 @@ This project is part of the Communication Technologies Lab.
 
 ### 2. Clone the Repository
 ```sh
-git https://github.com/elmerjani/Communication-Technologies-Lab.git
+git clone https://github.com/elmerjani/Communication-Technologies-Lab.git
 cd Communication-Technologies-Lab
 ```
 
@@ -26,7 +26,12 @@ or on Windows (Command Prompt):
 set SPRING_DATA_MONGODB_URI=your-mongodb-uri
 ```
 
-### 4. Run the Project
+### 4. Build project
+```sh
+./mvnw clean package
+```
+
+### 5. Run the Project
 
 #### Using Maven
 ```sh
@@ -35,7 +40,6 @@ set SPRING_DATA_MONGODB_URI=your-mongodb-uri
 
 #### Using JAR File
 ```sh
-./mvnw clean package
 java -jar target/server-0.0.1-SNAPSHOT.jar
 ```
 
