@@ -1,4 +1,4 @@
-package com.rest.server.controllers;
+package com.rest.server.graphql;
 
 import com.rest.server.models.Location;
 import com.rest.server.services.LocationService;

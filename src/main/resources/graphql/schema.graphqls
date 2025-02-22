@@ -5,17 +5,121 @@ type Location {
     locationState: String
     locationCountry: String
     locationTimezone: String
+    users: [User] # Relation avec User
+}
+
+type User {
+    id: ID!
+    firstName: String!
+    lastName: String!
+    email: String!
+    location: Location  # Relation avec Location
+    posts: [Post]  # Relation avec Post
+    comments: [Comment]  # Relation avec Comment
+}
+
+type Post {
+    postId: ID!
+    postText: String!
+    postImage: String
+    postLikes: Int
+    postLink: String
+    postTags: [String]
+    postPublishDate: String
+    postOwnerId: String
+    owner: User  # Relation avec User
+    comments: [Comment]  # Relation avec Comment
+    tags: [Tag]  # Relation avec Tag
+}
+
+type Comment {
+    commentId: ID!
+    commentMessage: String!
+    commentOwnerId: String!
+    commentPostId: String!
+    commentPublishDate: String
+    owner: User  # Relation avec User
+    post: Post   # Relation avec Post
+}
+
+type Tag {
+    tagId: ID!
+    tagName: String!
+    posts: [Post]  # Relation avec Post
 }
 
 type Query {
+    # Récupérer toutes les locations avec pagination
     getAllLocations(page: Int, size: Int): [Location!]!
+
+    # Récupérer une seule location par ID
     getSingleLocation(locationId: ID!): Location
+
+    # Récupérer tous les utilisateurs avec pagination
+    getAllUsers(page: Int, size: Int): [User]!
+
+    # Récupérer un utilisateur par ID
+    getUser(id: ID!): User
+
+    # Récupérer tous les posts avec pagination
+    getAllPosts(page: Int, size: Int): [Post!]!
+
+    # Récupérer un post par ID
+    getPost(postId: ID!): Post
+
+    # Récupérer les posts par utilisateur
+    getPostsByUser(userId: ID!, page: Int, size: Int): [Post!]!
+
+    # Récupérer les posts par tag
+    getPostsByTag(tag: String!, page: Int, size: Int): [Post!]!
+
+    # Rechercher des posts
+    searchPosts(query: String!, page: Int, size: Int): [Post!]!
+
+    # Récupérer tous les tags
+    getAllTags(page: Int, size: Int): [Tag!]!
+
+    # Récupérer un tag par ID
+    getTag(tagId: ID!): Tag
+
+    # Récupérer tous les commentaires avec pagination
+    getAllComments(page: Int, size: Int): [Comment!]!
+
+    # Récupérer un commentaire par ID
+    getComment(commentId: ID!): Comment
+
+    # Récupérer les commentaires par post
+    getCommentsByPost(postId: ID!, page: Int, size: Int): [Comment!]!
+
+    # Récupérer les commentaires par utilisateur
+    getCommentsByUser(userId: ID!, page: Int, size: Int): [Comment!]!
 }
 
 type Mutation {
+    # CRUD pour Location
     createLocation(locationStreet: String!, locationCity: String, locationState: String,
         locationCountry: String, locationTimezone: String): Location!
     updateLocation(locationId: ID!, locationStreet: String, locationCity: String, locationState: String,
         locationCountry: String, locationTimezone: String): Location
     deleteLocation(locationId: ID!): Boolean!
+
+    # CRUD pour User
+    createUser(firstName: String!, lastName: String!, email: String!, locationId: ID!): User
+    updateUser(id: ID!, firstName: String, lastName: String, locationId: ID): User
+    deleteUser(id: ID!): Boolean
+
+    # CRUD pour Post
+    createPost(postText: String!, postImage: String, postLikes: Int, postLink: String, postTags: [String], postOwnerId: String!): Post!
+    updatePost(postId: ID!, postText: String, postImage: String, postLikes: Int, postLink: String, postTags: [String]): Post
+    deletePost(postId: ID!): Boolean!
+
+    # CRUD pour Comment
+    createComment(commentMessage: String!, commentOwnerId: String!, commentPostId: String!): Comment!
+    updateComment(commentId: ID!, commentMessage: String): Comment
+    deleteComment(commentId: ID!): Boolean!
+
+    # CRUD pour Tag
+    createTag(tagName: String!): Tag!
+    updateTag(tagId: ID!, tagName: String): Tag
+    deleteTag(tagId: ID!): Boolean!
 }
