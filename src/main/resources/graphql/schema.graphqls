@@ -9,13 +9,17 @@ type Location {
 }
 
 type User {
-    id: ID!
-    firstName: String!
-    lastName: String!
-    email: String!
-    location: Location  # Relation avec Location
-    posts: [Post]  # Relation avec Post
-    comments: [Comment]  # Relation avec Comment
+    userId: ID!
+    userTitle: String
+    userFirstName: String!
+    userLastName: String!
+    userGender: String
+    userEmail: String
+    userDateOfBirth: String
+    userRegisterDate: String
+    userPhone: String
+    userPicture: String
+    userLocationId: String
 }
 
 type Post {
@@ -104,9 +108,35 @@ type Mutation {
     deleteLocation(locationId: ID!): Boolean!
 
     # CRUD pour User
-    createUser(firstName: String!, lastName: String!, email: String!, locationId: ID!): User
-    updateUser(id: ID!, firstName: String, lastName: String, locationId: ID): User
-    deleteUser(id: ID!): Boolean
+    createUser(
+        userTitle: String,
+        userFirstName: String!,
+        userLastName: String!,
+        userGender: String,
+        userEmail: String!,
+        userPassword: String!,
+        userDateOfBirth: String,
+        userRegisterDate: String,
+        userPhone: String,
+        userPicture: String,
+        userLocationId: String
+    ): User
+
+    updateUser(
+        id: ID!,
+        userTitle: String,
+        userFirstName: String,
+        userLastName: String,
+        userGender: String,
+        userEmail: String,
+        userDateOfBirth: String,
+        userRegisterDate: String,
+        userPhone: String,
+        userPicture: String,
+        userLocationId: String
+    ): User
+
+    deleteUser(id: ID!): String
 
     # CRUD pour Post
     createPost(postText: String!, postImage: String, postLikes: Int, postLink: String, postTags: [String], postOwnerId: String!): Post!

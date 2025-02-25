@@ -10,10 +10,12 @@ import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.stereotype.Component;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.stereotype.Controller;
+
 import java.util.List;
 import java.util.Optional;
 
-@Component
+@Controller
 public class UserGraphQL {
 
     @Autowired
@@ -40,16 +42,24 @@ public class UserGraphQL {
         return users.map(this::convertToDto).getContent();
     }
 
-    // Equivalent de createUser
     @MutationMapping
-    public User createUser(@Argument String firstName, @Argument String lastName, @Argument String email) {
+    public User createUser(@Argument String userTitle,@Argument String userFirstName,@Argument String userLastName,@Argument String userGender,@Argument String userEmail,
+                           @Argument String userPassword,@Argument String userDateOfBirth,@Argument String userRegisterDate,@Argument String userPhone,@Argument String userPicture,@Argument String userLocationId) {
         User user = new User();
-        user.setUserFirstName(firstName);
-        user.setUserLastName(lastName);
-        user.setUserEmail(email);
+        user.setUserTitle(userTitle);
+        user.setUserFirstName(userFirstName);
+        user.setUserLastName(userLastName);
+        user.setUserGender(userGender);
+        user.setUserEmail(userEmail);
+        user.setUserPassword(userPassword);
+        user.setUserDateOfBirth(userDateOfBirth);
+        user.setUserRegisterDate(userRegisterDate);
+        user.setUserPhone(userPhone);
+        user.setUserPicture(userPicture);
+        user.setUserLocationId(userLocationId);
+
         return userService.createUser(user);
     }
-
     // Equivalent de updateUser
     @MutationMapping
     public User updateUser(@Argument String id, @Argument String firstName, @Argument String lastName) {
