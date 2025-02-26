@@ -20,6 +20,7 @@ type User {
     userPhone: String
     userPicture: String
     userLocationId: String
+
 }
 
 type Post {
@@ -52,50 +53,28 @@ type Tag {
     posts: [Post]  # Relation avec Post
 }
 
+type Subscription {
+    userCreated: User
+    userDeleted: ID
+}
+
+
+
 type Query {
-    # Récupérer toutes les locations avec pagination
     getAllLocations(page: Int, size: Int): [Location!]!
-
-    # Récupérer une seule location par ID
     getSingleLocation(locationId: ID!): Location
-
-    # Récupérer tous les utilisateurs avec pagination
     getAllUsers(page: Int, size: Int): [User]!
-
-    # Récupérer un utilisateur par ID
     getUser(id: ID!): User
-
-    # Récupérer tous les posts avec pagination
     getAllPosts(page: Int, size: Int): [Post!]!
-
-    # Récupérer un post par ID
     getPost(postId: ID!): Post
-
-    # Récupérer les posts par utilisateur
     getPostsByUser(userId: ID!, page: Int, size: Int): [Post!]!
-
-    # Récupérer les posts par tag
     getPostsByTag(tag: String!, page: Int, size: Int): [Post!]!
-
-    # Rechercher des posts
     searchPosts(query: String!, page: Int, size: Int): [Post!]!
-
-    # Récupérer tous les tags
     getAllTags(page: Int, size: Int): [Tag!]!
-
-    # Récupérer un tag par ID
     getTag(tagId: ID!): Tag
-
-    # Récupérer tous les commentaires avec pagination
     getAllComments(page: Int, size: Int): [Comment!]!
-
-    # Récupérer un commentaire par ID
     getComment(commentId: ID!): Comment
-
-    # Récupérer les commentaires par post
     getCommentsByPost(postId: ID!, page: Int, size: Int): [Comment!]!
-
-    # Récupérer les commentaires par utilisateur
     getCommentsByUser(userId: ID!, page: Int, size: Int): [Comment!]!
 }
 

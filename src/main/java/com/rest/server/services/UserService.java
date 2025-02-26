@@ -3,6 +3,7 @@ package com.rest.server.services;
 import com.rest.server.exception.ResourceNotFoundException;
 import com.rest.server.models.User;
 import com.rest.server.repositories.UserRepository;
+import org.reactivestreams.Publisher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -10,6 +11,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import reactor.core.publisher.Sinks;
+
 import java.util.Optional;
 
 @Service
@@ -17,20 +20,21 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
 
-
     public Page<User> allUsers(Pageable pageable) {
         return userRepository.findAll(pageable);
     }
 
-    public Optional<User> singleUser(String id){
+    public Optional<User> singleUser(String id) {
         return Optional.ofNullable(userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + id)));
     }
+
     public Page<User> searchUsers(String query, Pageable pageable) {
         // Implement search logic for users
         // Example: Search by firstName, lastName, or email
         return userRepository.findByUserFirstNameContainingIgnoreCaseOrUserLastNameContainingIgnoreCaseOrUserEmailContainingIgnoreCase(query, query, query, pageable);
     }
+
     public User createUser(User user) {
         if (userRepository.findByUserEmail(user.getUserEmail()).isPresent()) {
             throw new RuntimeException("Email already exists");
@@ -73,7 +77,7 @@ public class UserService {
                 }).orElseThrow(() -> new RuntimeException("User not found"));
     }
 
-    public void deleteUser(String id) {
+  public void deleteUser(String id) {
         userRepository.deleteById(id);
     }
 }

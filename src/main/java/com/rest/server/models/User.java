@@ -41,4 +41,8 @@ public class User {
     private String userPhone;
     private String userPicture;
     private String userLocationId;
+    private String userPosts;
+
+    public User(String firstName, String lastName, String email, String password) {
+    }
 }

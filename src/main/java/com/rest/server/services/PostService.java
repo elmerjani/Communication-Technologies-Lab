@@ -3,8 +3,10 @@ package com.rest.server.services;
 import com.rest.server.exception.ResourceNotFoundException;
 import com.rest.server.models.Post;
 import com.rest.server.models.Tag;
+import com.rest.server.models.User;
 import com.rest.server.repositories.PostRepository;
 import com.rest.server.repositories.TagRepository;
+import com.rest.server.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -23,6 +25,9 @@ public class PostService {
     private MongoTemplate mongoTemplate;
     @Autowired
     private TagRepository tagRepository;
+
+    @Autowired
+    private UserRepository userRepository;
     public Page<Post> allPosts(Pageable pageable) {
         return postRepository.findAll(pageable);
     }
@@ -48,8 +53,15 @@ public class PostService {
         return new PageImpl<>(posts, pageable, total);
     }
 
-    public Optional<Post> singlePost(String id){
-        return Optional.ofNullable(postRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Post not found with ID: " + id)));
+    public Optional<Post> singlePost(String postId) {
+        Optional<Post> postOpt = postRepository.findById(postId);
+
+        postOpt.ifPresent(post -> {
+            Optional<User> ownerOpt = userRepository.findById(post.getPostOwnerId());
+            ownerOpt.ifPresent(post::setOwner);
+        });
+
+        return postOpt;
     }
 
     public Post createPost(Post post) {
