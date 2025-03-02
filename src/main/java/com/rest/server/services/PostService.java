@@ -63,6 +63,10 @@ public class PostService {
 
         return postOpt;
     }
+    public User getPostOwner(String userId) {
+        return userRepository.findById(userId).orElse(null);
+    }
+
 
     public Post createPost(Post post) {
         validatePostFields(post);

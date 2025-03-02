@@ -1,16 +1,18 @@
 package com.rest.server.services;
 
 import com.rest.server.exception.ResourceNotFoundException;
+import com.rest.server.graphql.UserGraphQL;
 import com.rest.server.models.User;
 import com.rest.server.repositories.UserRepository;
-import org.reactivestreams.Publisher;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 
 import java.util.Optional;
@@ -19,6 +21,32 @@ import java.util.Optional;
 public class UserService {
     @Autowired
     private UserRepository userRepository;
+
+    private final ApplicationEventPublisher eventPublisher;
+
+    public UserService(UserRepository userRepository, ApplicationEventPublisher eventPublisher) {
+        this.userRepository = userRepository;
+        this.eventPublisher = eventPublisher;
+    }
+
+    public User createUser(User user) {
+        if (userRepository.findByUserEmail(user.getUserEmail()).isPresent()) {
+            throw new RuntimeException("Email already exists");
+        }
+
+        validateUserFields(user);
+        String encryptedPassword = new BCryptPasswordEncoder().encode(user.getUserPassword());
+        user.setUserPassword(encryptedPassword);
+        User savedUser = userRepository.save(user);
+
+        //Publier l'événement pour la souscription
+        System.out.println("✅ Event Published: " + savedUser.getUserFirstName());
+        eventPublisher.publishEvent(savedUser);  //Publier l'événement
+
+        return savedUser;
+    }
+
+
 
     public Page<User> allUsers(Pageable pageable) {
         return userRepository.findAll(pageable);
@@ -30,23 +58,7 @@ public class UserService {
     }
 
     public Page<User> searchUsers(String query, Pageable pageable) {
-        // Implement search logic for users
-        // Example: Search by firstName, lastName, or email
         return userRepository.findByUserFirstNameContainingIgnoreCaseOrUserLastNameContainingIgnoreCaseOrUserEmailContainingIgnoreCase(query, query, query, pageable);
-    }
-
-    public User createUser(User user) {
-        if (userRepository.findByUserEmail(user.getUserEmail()).isPresent()) {
-            throw new RuntimeException("Email already exists");
-        }
-
-        validateUserFields(user);
-
-
-        // Encrypt password and save user
-        String encryptedPassword = new BCryptPasswordEncoder().encode(user.getUserPassword());
-        user.setUserPassword(encryptedPassword);
-        return userRepository.save(user);
     }
 
     private void validateUserFields(User user) {
@@ -59,7 +71,6 @@ public class UserService {
         if (user.getUserEmail() == null || user.getUserEmail().isEmpty()) {
             throw new RuntimeException("Email is required");
         }
-        // Add other required field checks as necessary
     }
 
     public User updateUser(String id, User updatedUser) {
@@ -77,7 +88,12 @@ public class UserService {
                 }).orElseThrow(() -> new RuntimeException("User not found"));
     }
 
-  public void deleteUser(String id) {
+
+    public void deleteUser(String id) {
         userRepository.deleteById(id);
+
     }
+
+
+
 }

@@ -18,12 +18,20 @@ public class PostGraphQLController {
     @Autowired
     private PostService postService;
 
+
+
     // Récupérer tous les posts avec pagination
     @QueryMapping
     public List<Post> getAllPosts(@Argument int page, @Argument int size) {
         Page<Post> postsPage = postService.allPosts(PageRequest.of(page, size));
-        return postsPage.getContent();
+
+        // Charger les utilisateurs associés à chaque post
+        return postsPage.getContent().stream().map(post -> {
+            post.setOwner(postService.getPostOwner(post.getPostOwnerId()));
+            return post;
+        }).toList();
     }
+
 
     // Récupérer un post par ID
     @QueryMapping

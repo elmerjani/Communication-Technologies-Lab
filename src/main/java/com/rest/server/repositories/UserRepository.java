@@ -14,6 +14,6 @@ public interface UserRepository extends MongoRepository<User, String> {
     Page<User> findAll(Pageable pageable);
     Optional<User> findByUserEmail(String userEmail);
     Page<User> findByUserFirstNameContainingIgnoreCaseOrUserLastNameContainingIgnoreCaseOrUserEmailContainingIgnoreCase(String userFirstName, String userLastName, String userEmail, Pageable pageable);
-
+    Optional<User> findTopByOrderByUserIdDesc();
 
 }

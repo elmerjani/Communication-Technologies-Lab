@@ -4,6 +4,7 @@ import com.rest.server.models.User;
 import com.rest.server.models.UserDto;
 import com.rest.server.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.event.EventListener;
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
@@ -13,10 +14,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 
-import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,67 +24,46 @@ public class UserGraphQL {
 
     @Autowired
     private UserService userService;
-/**/
-        // Utilisez un Sinks pour émettre les événements
-        private final Sinks.Many<User> userCreatedSink = Sinks.many().replay().all();
 
-        // Méthode de souscription pour l'utilisateur créé
-        @SubscriptionMapping
-        public Mono<User> userCreated() {
-            return userCreatedSink.asFlux().next();
-        }
+    private Sinks.Many<User> userSink;
 
-        @MutationMapping
-        public User createUser(@Argument String userTitle, @Argument String userFirstName, @Argument String userLastName,
-                               @Argument String userGender, @Argument String userEmail, @Argument String userPassword,
-                               @Argument String userDateOfBirth, @Argument String userRegisterDate, @Argument String userPhone,
-                               @Argument String userPicture, @Argument String userLocationId) {
-            User user = new User();
-            user.setUserTitle(userTitle);
-            user.setUserFirstName(userFirstName);
-            user.setUserLastName(userLastName);
-            user.setUserGender(userGender);
-            user.setUserEmail(userEmail);
-            user.setUserPassword(userPassword);
-            user.setUserDateOfBirth(userDateOfBirth);
-            user.setUserRegisterDate(userRegisterDate);
-            user.setUserPhone(userPhone);
-            user.setUserPicture(userPicture);
-            user.setUserLocationId(userLocationId);
-
-            User createdUser = userService.createUser(user);
-
-            // Après avoir créé un utilisateur, émettez l'événement de souscription
-            userCreatedSink.tryEmitNext(createdUser);
-
-            return createdUser;
-        }
-
-/**/
-    // Equivalent de getAllUsersV1 avec pagination
-    @QueryMapping
-    public List<UserDto> getAllUsers(@Argument int page, @Argument int size) {
-        Page<User> usersPage = userService.allUsers(PageRequest.of(page, size));
-        return usersPage.map(this::convertToDto).getContent();
+    public UserGraphQL() {
+        this.userSink = Sinks.many().multicast().onBackpressureBuffer();
     }
 
-    // Equivalent de getSingleUser
-    @QueryMapping
-    public UserDto getUser(@Argument String id) {
-        Optional<User> user = userService.singleUser(id);
-        return user.map(this::convertToDto).orElse(null);
+    private void resetUserSink() {
+        System.out.println("Resetting userSink");
+        this.userSink = Sinks.many().multicast().onBackpressureBuffer();
     }
 
-    // Equivalent de searchUsers
-    @QueryMapping
-    public List<UserDto> searchUsers(@Argument String query, @Argument int page, @Argument int size) {
-        Page<User> users = userService.searchUsers(query, PageRequest.of(page, size));
-        return users.map(this::convertToDto).getContent();
+    @SubscriptionMapping
+    public Flux<User> userCreated() {
+        return userSink.asFlux()
+                .doOnNext(user -> {
+                    System.out.println("📢 Sending event to client: " + user.getUserFirstName());
+                })
+                .doOnError(error -> System.err.println("❌ Subscription error: " + error.getMessage()))
+                .doOnCancel(() -> {
+                    System.out.println("❌ Subscription cancelled");
+                    resetUserSink();
+                })
+                .doOnSubscribe(subscription -> {
+                    System.out.println("📡 Subscription started...");
+                });
     }
-/*
+
+    @EventListener
+    public void publishNewUser(User user) {
+        System.out.println("✅ User received in UserGraphQL: " + user.getUserFirstName());
+        userSink.tryEmitNext(user);
+        System.out.println("🔄 Emitting event for user: " + user.getUserFirstName());
+    }
+
     @MutationMapping
-    public User createUser(@Argument String userTitle,@Argument String userFirstName,@Argument String userLastName,@Argument String userGender,@Argument String userEmail,
-                           @Argument String userPassword,@Argument String userDateOfBirth,@Argument String userRegisterDate,@Argument String userPhone,@Argument String userPicture,@Argument String userLocationId) {
+    public User createUser(@Argument String userTitle, @Argument String userFirstName, @Argument String userLastName,
+                           @Argument String userGender, @Argument String userEmail, @Argument String userPassword,
+                           @Argument String userDateOfBirth, @Argument String userRegisterDate, @Argument String userPhone,
+                           @Argument String userPicture, @Argument String userLocationId) {
         User user = new User();
         user.setUserTitle(userTitle);
         user.setUserFirstName(userFirstName);
@@ -99,9 +77,33 @@ public class UserGraphQL {
         user.setUserPicture(userPicture);
         user.setUserLocationId(userLocationId);
 
-        return userService.createUser(user);
-    }*/
-    // Equivalent de updateUser
+        User createdUser = userService.createUser(user);
+
+        // Ajout du nouvel utilisateur à userSink
+        System.out.println("🔄 Emitting event for user: " + createdUser.getUserFirstName());
+        userSink.tryEmitNext(createdUser);
+
+        return createdUser;
+    }
+
+    @QueryMapping
+    public List<UserDto> getAllUsers(@Argument int page, @Argument int size) {
+        Page<User> usersPage = userService.allUsers(PageRequest.of(page, size));
+        return usersPage.map(this::convertToDto).getContent();
+    }
+
+    @QueryMapping
+    public UserDto getUser(@Argument String id) {
+        Optional<User> user = userService.singleUser(id);
+        return user.map(this::convertToDto).orElse(null);
+    }
+
+    @QueryMapping
+    public List<UserDto> searchUsers(@Argument String query, @Argument int page, @Argument int size) {
+        Page<User> users = userService.searchUsers(query, PageRequest.of(page, size));
+        return users.map(this::convertToDto).getContent();
+    }
+
     @MutationMapping
     public User updateUser(
             @Argument String id,
@@ -132,15 +134,12 @@ public class UserGraphQL {
         return userService.updateUser(id, existingUser);
     }
 
-
-    // Equivalent de deleteUser
     @MutationMapping
     public boolean deleteUser(@Argument String id) {
         userService.deleteUser(id);
         return true;
     }
 
-    // Conversion User -> UserDto
     private UserDto convertToDto(User user) {
         UserDto userDto = new UserDto();
         userDto.setUserId(user.getUserId());

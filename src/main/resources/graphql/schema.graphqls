@@ -55,8 +55,8 @@ type Tag {
 
 type Subscription {
     userCreated: User
-    userDeleted: ID
 }
+
 
 
 
