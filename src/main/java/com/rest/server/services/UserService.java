@@ -40,8 +40,8 @@ public class UserService {
         User savedUser = userRepository.save(user);
 
         //Publier l'événement pour la souscription
-        System.out.println("✅ Event Published: " + savedUser.getUserFirstName());
-        eventPublisher.publishEvent(savedUser);  //Publier l'événement
+        System.out.println("Event Published: " + savedUser.getUserFirstName());
+        eventPublisher.publishEvent(savedUser);
 
         return savedUser;
     }

@@ -40,23 +40,23 @@ public class UserGraphQL {
     public Flux<User> userCreated() {
         return userSink.asFlux()
                 .doOnNext(user -> {
-                    System.out.println("📢 Sending event to client: " + user.getUserFirstName());
+                    System.out.println(" Sending event to client: " + user.getUserFirstName());
                 })
-                .doOnError(error -> System.err.println("❌ Subscription error: " + error.getMessage()))
+                .doOnError(error -> System.err.println(" Subscription error: " + error.getMessage()))
                 .doOnCancel(() -> {
-                    System.out.println("❌ Subscription cancelled");
+                    System.out.println(" Subscription cancelled");
                     resetUserSink();
                 })
                 .doOnSubscribe(subscription -> {
-                    System.out.println("📡 Subscription started...");
+                    System.out.println(" Subscription started...");
                 });
     }
 
     @EventListener
     public void publishNewUser(User user) {
-        System.out.println("✅ User received in UserGraphQL: " + user.getUserFirstName());
+        System.out.println(" User received in UserGraphQL: " + user.getUserFirstName());
         userSink.tryEmitNext(user);
-        System.out.println("🔄 Emitting event for user: " + user.getUserFirstName());
+        System.out.println(" Emitting event for user: " + user.getUserFirstName());
     }
 
     @MutationMapping
@@ -80,8 +80,8 @@ public class UserGraphQL {
         User createdUser = userService.createUser(user);
 
         // Ajout du nouvel utilisateur à userSink
-        System.out.println("🔄 Emitting event for user: " + createdUser.getUserFirstName());
-        userSink.tryEmitNext(createdUser);
+        //System.out.println(" Emitting event for user: " + createdUser.getUserFirstName());
+        //userSink.tryEmitNext(createdUser);
 
         return createdUser;
     }
