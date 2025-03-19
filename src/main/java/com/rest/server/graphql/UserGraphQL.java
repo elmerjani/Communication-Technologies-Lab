@@ -5,6 +5,7 @@ import com.rest.server.models.UserDto;
 import com.rest.server.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
+import org.springframework.data.domain.Sort;
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
@@ -26,14 +27,27 @@ public class UserGraphQL {
     private UserService userService;
 
     private Sinks.Many<User> userSink;
+    private final Sinks.Many<String> userDeletedSink;
 
     public UserGraphQL() {
         this.userSink = Sinks.many().multicast().onBackpressureBuffer();
+        this.userDeletedSink = Sinks.many().multicast().onBackpressureBuffer();
     }
 
     private void resetUserSink() {
         System.out.println("Resetting userSink");
         this.userSink = Sinks.many().multicast().onBackpressureBuffer();
+    }
+
+
+    @SubscriptionMapping
+    public Flux<String> userDeleted() {
+        System.out.println("📡 Subscription `userDeleted` started...");
+
+        return userDeletedSink.asFlux()
+                .doOnNext(userId -> System.out.println("User deleted event sent: " + userId))
+                .doOnError(error -> System.err.println("Subscription error: " + error.getMessage()))
+                .doOnCancel(() -> System.out.println("Subscription cancelled"));
     }
 
     @SubscriptionMapping
@@ -51,6 +65,7 @@ public class UserGraphQL {
                     System.out.println(" Subscription started...");
                 });
     }
+
 
     @EventListener
     public void publishNewUser(User user) {
@@ -87,10 +102,28 @@ public class UserGraphQL {
     }
 
     @QueryMapping
-    public List<UserDto> getAllUsers(@Argument int page, @Argument int size) {
-        Page<User> usersPage = userService.allUsers(PageRequest.of(page, size));
-        return usersPage.map(this::convertToDto).getContent();
+    public Object getAllUsers(
+            @Argument int page,
+            @Argument int size,
+            @Argument String sortBy,
+            @Argument String sortOrder
+
+    ) {
+        // Définir l'ordre de tri (par défaut : tri par `userFirstName` en ASC)
+        Sort.Direction direction = (sortOrder != null && sortOrder.equalsIgnoreCase("desc"))
+                ? Sort.Direction.DESC
+                : Sort.Direction.ASC;
+        String sortingField = (sortBy != null) ? sortBy : "userFirstName";
+
+        // Récupérer les utilisateurs avec pagination et tri
+        Page<User> usersPage = userService.allUsers(PageRequest.of(page, size, Sort.by(direction, sortingField)));
+        List<UserDto> users = usersPage.map(this::convertToDto).getContent();
+
+
+        return users;
     }
+
+
 
     @QueryMapping
     public UserDto getUser(@Argument String id) {

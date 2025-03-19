@@ -1,18 +1,13 @@
 package com.rest.server.configurations;
 
-import jakarta.servlet.Filter;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.FilterConfig;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.ServletRequest;
-import jakarta.servlet.ServletResponse;
+import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.zip.GZIPOutputStream;
+import jakarta.servlet.http.HttpServletResponseWrapper;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.WriteListener;
-import jakarta.servlet.http.HttpServletResponseWrapper;
 
 public class CustomCompressionFilter implements Filter {
 
@@ -22,18 +17,19 @@ public class CustomCompressionFilter implements Filter {
 
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpServletResponse httpResponse = (HttpServletResponse) response;
-        String uri = httpRequest.getRequestURI();
 
-        // Désactiver la compression pour les requêtes GraphQL
-        if (uri.startsWith("/graphql")) {
+        String acceptEncoding = httpRequest.getHeader("Accept-Encoding");
+        if (acceptEncoding == null || !acceptEncoding.contains("gzip")) {
             chain.doFilter(request, response);
             return;
         }
 
-        // Appliquer la compression pour les autres endpoints
         GZipServletResponseWrapper wrappedResponse = new GZipServletResponseWrapper(httpResponse);
-        chain.doFilter(request, wrappedResponse);
-        wrappedResponse.finishResponse();
+        try {
+            chain.doFilter(request, wrappedResponse);
+        } finally {
+            wrappedResponse.finishResponse();
+        }
     }
 
     @Override
@@ -45,10 +41,12 @@ public class CustomCompressionFilter implements Filter {
     private static class GZipServletResponseWrapper extends HttpServletResponseWrapper {
         private GZIPOutputStream gzipOutputStream;
         private ServletOutputStream servletOutputStream;
+        private boolean isClosed = false;
 
         public GZipServletResponseWrapper(HttpServletResponse response) throws IOException {
             super(response);
             response.addHeader("Content-Encoding", "gzip");
+            response.addHeader("Vary", "Accept-Encoding");
             this.servletOutputStream = response.getOutputStream();
             this.gzipOutputStream = new GZIPOutputStream(servletOutputStream);
         }
@@ -66,24 +64,31 @@ public class CustomCompressionFilter implements Filter {
 
                 @Override
                 public void write(int b) throws IOException {
-                    gzipOutputStream.write(b);
+                    if (!isClosed) {
+                        gzipOutputStream.write(b);
+                    }
                 }
 
                 @Override
                 public void flush() throws IOException {
-                    gzipOutputStream.flush();
+                    if (!isClosed) {
+                        gzipOutputStream.flush();
+                    }
                 }
 
                 @Override
                 public void close() throws IOException {
-                    gzipOutputStream.close();
+                    finishResponse();
                 }
             };
         }
 
         public void finishResponse() throws IOException {
-            gzipOutputStream.finish();
-            gzipOutputStream.close();
+            if (!isClosed) {
+                isClosed = true;
+                gzipOutputStream.finish();
+                gzipOutputStream.close();
+            }
         }
     }
 }

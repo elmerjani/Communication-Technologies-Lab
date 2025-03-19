@@ -21,6 +21,7 @@ import java.util.Optional;
 public class UserService {
     @Autowired
     private UserRepository userRepository;
+    private final Sinks.Many<String> userDeletedSink = Sinks.many().multicast().onBackpressureBuffer();
 
     private final ApplicationEventPublisher eventPublisher;
 
@@ -91,6 +92,8 @@ public class UserService {
 
     public void deleteUser(String id) {
         userRepository.deleteById(id);
+        System.out.println("Event Published (User Deleted): " + id);
+        userDeletedSink.tryEmitNext(id); // Notifier la suppression via la souscription
 
     }
 
