@@ -6,6 +6,7 @@ import com.rest.server.models.User;
 import com.rest.server.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
@@ -24,6 +25,7 @@ public class UserService {
     private final Sinks.Many<String> userDeletedSink = Sinks.many().multicast().onBackpressureBuffer();
 
     private final ApplicationEventPublisher eventPublisher;
+
 
     public UserService(UserRepository userRepository, ApplicationEventPublisher eventPublisher) {
         this.userRepository = userRepository;
@@ -48,8 +50,9 @@ public class UserService {
     }
 
 
-
+    @Cacheable(value = "users", key = "#pageable.pageNumber + '-' + #pageable.pageSize")
     public Page<User> allUsers(Pageable pageable) {
+        System.out.println("Fetching from database...");
         return userRepository.findAll(pageable);
     }
 
