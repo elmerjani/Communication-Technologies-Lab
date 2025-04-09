@@ -8,6 +8,9 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+
 @Document(collection = "users")
 @Data
 @AllArgsConstructor
@@ -43,6 +46,10 @@ public class User {
     private String userLocationId;
     private String userPosts;
 
-    public User(String firstName, String lastName, String email, String password) {
+    public User formatDate( String format) {
+        LocalDate dateOfBirth = LocalDate.parse(userDateOfBirth), registerDate = LocalDate.parse(userRegisterDate);
+        userDateOfBirth = dateOfBirth.format(DateTimeFormatter.ofPattern(format));
+        userRegisterDate = registerDate.format(DateTimeFormatter.ofPattern(format));
+        return this;
     }
 }

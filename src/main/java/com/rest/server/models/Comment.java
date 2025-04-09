@@ -3,6 +3,10 @@ import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import jakarta.validation.constraints.*;
+
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+
 @Document(collection = "comments")
 @Data
 @AllArgsConstructor
@@ -22,4 +26,11 @@ public class Comment {
     private String commentPostId;
 
     private String commentPublishDate;
+
+    public  Comment formatDate( String format) {
+        LocalDate date = LocalDate.parse(commentPublishDate);
+        commentPublishDate = date.format(DateTimeFormatter.ofPattern(format));
+        return this;
+
+    }
 }

@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.AllArgsConstructor;
 
+import java.time.LocalDate;
+
 @Getter
 @Setter
 @AllArgsConstructor

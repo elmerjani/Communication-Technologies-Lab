@@ -50,12 +50,14 @@ public class CommentGraphQLController {
     public Comment createComment(
             @Argument String commentMessage,
             @Argument String commentOwnerId,
-            @Argument String commentPostId
+            @Argument String commentPostId,
+            @Argument String commentPublishDate
     ) {
         Comment comment = new Comment();
         comment.setCommentMessage(commentMessage);
         comment.setCommentOwnerId(commentOwnerId);
         comment.setCommentPostId(commentPostId);
+        comment.setCommentPublishDate(commentPublishDate);
         return commentService.createComment(comment);
     }
 

@@ -3,7 +3,10 @@ package com.rest.server.graphql;
 import com.rest.server.models.User;
 import com.rest.server.models.UserDto;
 import com.rest.server.services.UserService;
+import jakarta.servlet.http.HttpServletRequest;
+import org.apache.tomcat.util.descriptor.LocalResolver;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Sort;
 import org.springframework.graphql.data.method.annotation.Argument;
@@ -14,10 +17,16 @@ import org.springframework.stereotype.Component;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.web.servlet.LocaleResolver;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 @Controller
@@ -25,6 +34,14 @@ public class UserGraphQL {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    MessageSource messageSource;
+
+    @Autowired
+    LocaleResolver localResolver;
+
+
 
     private Sinks.Many<User> userSink;
     private final Sinks.Many<String> userDeletedSink;
@@ -114,10 +131,11 @@ public class UserGraphQL {
                 ? Sort.Direction.DESC
                 : Sort.Direction.ASC;
         String sortingField = (sortBy != null) ? sortBy : "userFirstName";
-
+        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
+        Locale locale = localResolver.resolveLocale(request);
         // Récupérer les utilisateurs avec pagination et tri
-        Page<User> usersPage = userService.allUsers(PageRequest.of(page, size, Sort.by(direction, sortingField)));
-        List<UserDto> users = usersPage.map(this::convertToDto).getContent();
+        Page<User> usersPage = userService.allUsers(PageRequest.of(page, size, Sort.by(direction, sortingField))).map(user -> user.formatDate(getFormat()));
+        List<UserDto> users = usersPage.map(user -> convertToDto(user)).getContent();
 
 
         return users;
@@ -127,13 +145,13 @@ public class UserGraphQL {
 
     @QueryMapping
     public UserDto getUser(@Argument String id) {
-        Optional<User> user = userService.singleUser(id);
+        Optional<User> user = userService.singleUser(id).map(u -> u.formatDate(getFormat()));
         return user.map(this::convertToDto).orElse(null);
     }
 
     @QueryMapping
     public List<UserDto> searchUsers(@Argument String query, @Argument int page, @Argument int size) {
-        Page<User> users = userService.searchUsers(query, PageRequest.of(page, size));
+        Page<User> users = userService.searchUsers(query, PageRequest.of(page, size)).map(u -> u.formatDate(getFormat()));
         return users.map(this::convertToDto).getContent();
     }
 
@@ -187,5 +205,10 @@ public class UserGraphQL {
         userDto.setUserPicture(user.getUserPicture());
         userDto.setUserLocationId(user.getUserLocationId());
         return userDto;
+    }
+    private String getFormat() {
+        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
+        Locale locale = localResolver.resolveLocale(request);
+        return messageSource.getMessage("date.format", null, locale);
     }
 }

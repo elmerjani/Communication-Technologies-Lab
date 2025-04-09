@@ -5,7 +5,12 @@ import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
+
 @Document(collection = "posts")
 @Data
 @AllArgsConstructor
@@ -29,4 +34,11 @@ public class Post {
 
     @Transient
     private User owner;
+
+    public  Post formatDate( String format) {
+        LocalDate date = LocalDate.parse(postPublishDate);
+        postPublishDate = date.format(DateTimeFormatter.ofPattern(format));
+        return this;
+
+    }
 }
