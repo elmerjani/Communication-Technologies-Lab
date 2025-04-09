@@ -3,6 +3,7 @@ package com.rest.server.models;
 import jakarta.validation.constraints.*;
 import lombok.*;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.mapping.Document;
 import java.util.List;
 @Document(collection = "posts")
@@ -25,4 +26,7 @@ public class Post {
 
     @NotNull(message = "Owner cannot be null")
     private String postOwnerId;
+
+    @Transient
+    private User owner;
 }
